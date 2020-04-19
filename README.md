@@ -1,5 +1,8 @@
 # calendar
 
+## 概述
+### 一个高效、可控的日历组件。它基于vue和moment.js。
+
 ## Project setup
 ```
 npm install

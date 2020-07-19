@@ -1,115 +1,206 @@
 <template>
-  <div class="calendarContaner">
-    <div v-for="item in weekTitles" :key="item" class="dayContainer weekTitle">{{ item }}</div>
-    <div v-for="item in initialPosition" :key="'hide-'+item" class="dayContainer" />
-    <div v-for="item in totalDays" :key="item" class="dayContainer oneday" @click="touchDay(item)">
+  <div class="bb-calendar">
+    <div class="bb-week-title">
+      <div v-for="item in weekTitles" :key="item" class="bb-week-title-item">{{ item }}</div>
+    </div>
+
+    <div class="bb-day-container">
       <div
-        :class="['solar',isToday(item)?'today':'',checked===factory(item)?'active':'']"
-        :style="`width:${size};height:${size};`"
-      >{{ item }}</div>
+        v-for="(item,index) in PrevMonthFillSum"
+        :key="'prev-'+index"
+        class="bb-day bb-prev-day"
+        :style="{ height:Height }"
+        @click="prevMonth"
+      >
+        <slot :day="factory((PrevMonthMax - PrevMonthFillSum + item),-1)">
+          <div class="bb-oneday">{{ PrevMonthMax - PrevMonthFillSum + item }}</div>
+        </slot>
+      </div>
+      <div
+        v-for="(item,index) in MonthSum"
+        :key="index"
+        class="bb-day"
+        :style="{ height:Height }"
+        @click="handleOneday(item)"
+      >
+        <slot :day="factory(item)">
+          <div
+            :class="[
+              'bb-oneday',
+              checked===factory(item)?'bb-checked':'',
+              isToday(item)?'bb-today':''
+            ]"
+          >
+            {{ item }}
+          </div>
+        </slot>
+      </div>
+      <div
+        v-for="(item,index) in NextMonthFillSum"
+        :key="'next'+index"
+        class="bb-day bb-next-day"
+        :style="{ height:Height }"
+        @click="nextMonth"
+      >
+        <slot :day="factory(item,1)">
+          <div class="bb-oneday">{{ item }}</div>
+        </slot>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import moment from 'moment'
-import 'moment/locale/zh-cn'
-moment.locale('zh-cn')
-
 export default {
   name: 'Calendar',
   props: {
-    width: {
-      type: String,
-      default: '100%'
-    },
-    size: {
-      type: String,
-      default: '30px'
-    },
     type: {
       type: String,
       default: 'month'
+    },
+    startWeek: {
+      type: Number,
+      default: 0
+    },
+    format: {
+      type: String,
+      default: 'YYYY-MM-DD'
     }
   },
   data() {
-    const today = moment()
+    const week = '日一二三四五六'
     return {
-      weekTitles: ['一', '二', '三', '四', '五', '六', '日'],
-      oneday: today.format('YYYY-MM-DD'),
+      weekTitles: week.split('').slice(this.startWeek)
+        .concat(week.split('').slice(0, this.startWeek)),
+      oneday: this.$moment(),
       checked: null
     }
   },
   computed: {
-    initialPosition() {
-      return moment(this.oneday).startOf('month').weekday()
+    PrevMonthMax() { // 上月几天
+      return this.$moment(this.oneday).subtract('month', 1).daysInMonth()
     },
-    totalDays() {
-      return moment(this.oneday).daysInMonth()
+    MonthSum() { // 本月几天
+      return this.$moment(this.oneday).daysInMonth()
+    },
+    PrevMonthFillSum() { // 本月前填充几天
+      return this.$moment(this.oneday).startOf('month').day() - this.startWeek
+    },
+    NextMonthFillSum() { // 本月后填充几天
+      return 6 - this.$moment(this.oneday).endOf('month').day() + this.startWeek
+    },
+    AllSum() { // 视图中共几天
+      return this.MonthSum + this.PrevMonthFillSum + this.NextMonthFillSum
+    },
+    Height() { // 每天高度
+      return parseInt(100 / (this.AllSum / 7)) + '%'
     }
   },
   methods: {
-    swiperleft() {
-      this.oneday = moment(this.oneday).add(1, 'M').format('YYYY-MM-DD')
-      console.log('左滑')
+    /**
+     * 上一月
+     */
+    prevMonth() {
+      this.oneday = this.$moment(this.oneday).add(-1, 'M')
+      this.switchoverMonth()
     },
-    swiperright() {
-      this.oneday = moment(this.oneday).add(-1, 'M').format('YYYY-MM-DD')
-      console.log('右滑')
+    /**
+     * 下一月
+     */
+    nextMonth() {
+      this.oneday = this.$moment(this.oneday).add(1, 'M')
+      this.switchoverMonth()
     },
-
-    factory(item) {
-      return moment(this.oneday).date(item).format('YYYY-MM-DD')
+    /**
+     * 返回当月
+     */
+    backToday() {
+      this.checked = null
+      this.oneday = this.$moment()
+      this.switchoverMonth()
     },
-
-    isToday(item) {
-      return this.factory(item) === moment().format('YYYY-MM-DD')
+    /**
+     * 格式化时间
+     */
+    factory(e, step = 0) {
+      return this.$moment(this.oneday).add(step, 'M').date(e).format(this.format)
     },
-    touchDay(item) {
-      const checked = this.factory(item)
+    /**
+     * 是否当天e
+     */
+    isToday(e) {
+      return this.factory(e) === this.$moment().format(this.format)
+    },
+    /**
+     * 点击某天
+     */
+    handleOneday(e) {
+      const checked = this.factory(e)
       this.checked = checked
-      console.log(checked)
+      this.$emit('check', checked)
+    },
+    /**
+     * 切换月
+     */
+    switchoverMonth() {
+      const e = this.$moment(this.oneday).format('YYYY-MM')
+      this.$emit('change', e)
     }
   }
 
 }
 </script>
 
-<style scoped>
-.calendarContaner{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: wrap;
-  box-sizing: border-box;
-  padding: 0 1%;
-}
-.dayContainer{
-  width: 14%;
+<style lang="scss" scoped>
+.bb-calendar{
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-.weekTitle{
-  line-height: 30px;
-}
-.oneday{
-  box-sizing: border-box;
-  padding: 5px;
-}
-.solar{
-  box-sizing: border-box;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.today{
-  color: #fff;
-  background: #409EFF;
-}
-.active{
-  border: 1px solid #C0C4CC;
+  .bb-week-title{
+    padding: 0 1%;
+    height: 30px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    &-item{
+      flex: 1;
+      text-align: center;
+    }
+  }
+
+  .bb-day-container{
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    position: relative;
+    .bb-day{
+      width: 14%;
+      .bb-oneday{
+        margin: auto;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        border-radius: 50%;
+      }
+      .bb-checked{
+        color: #fff;
+        background: #c0c4cc;
+      }
+      .bb-today{
+        color: #fff;
+        background: #4f83fd;
+      }
+    }
+    .bb-prev-day,
+    .bb-next-day{
+      color: #c0c4cc;
+    }
+  }
 }
 </style>

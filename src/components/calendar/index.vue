@@ -102,14 +102,14 @@ export default {
      */
     prevMonth() {
       this.oneday = this.$moment(this.oneday).add(-1, 'M')
-      this.switchoverMonth()
+      return this.switchoverMonth()
     },
     /**
      * 下一月
      */
     nextMonth() {
       this.oneday = this.$moment(this.oneday).add(1, 'M')
-      this.switchoverMonth()
+      return this.switchoverMonth()
     },
     /**
      * 返回当月
@@ -117,7 +117,7 @@ export default {
     backToday() {
       this.checked = null
       this.oneday = this.$moment()
-      this.switchoverMonth()
+      return this.switchoverMonth()
     },
     /**
      * 格式化时间
@@ -143,8 +143,7 @@ export default {
      * 切换月
      */
     switchoverMonth() {
-      const e = this.$moment(this.oneday).format('YYYY-MM')
-      this.$emit('change', e)
+      return this.$moment(this.oneday).format('YYYY-MM')
     }
   }
 

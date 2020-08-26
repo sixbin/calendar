@@ -1,26 +1,18 @@
 <template>
   <div id="app">
-    <!-- <Calendar @change="change" @check="check" /> -->
-    <div class="carousel-container">
-      <div class="carousel-item" />
-      <div class="carousel-item" />
-      <div class="carousel-item" />
-    </div>
+    <Calendar @check="check" />
   </div>
 </template>
 
 <script>
-// import Calendar from '@/components/calendar'
+import Calendar from '@/components/calendar'
 
 export default {
   name: 'App',
   components: {
-    // Calendar
+    Calendar
   },
   methods: {
-    change(e) {
-      console.log(e)
-    },
     check(e) {
       console.log(e)
     }
@@ -41,28 +33,5 @@ html,body{
 }
 #app{
   height: 100%;
-}
-</style>
-<style lang="scss">
-.carousel-container{
-  width: 300px;
-  height: 300px;
-  position: relative;
-  .carousel-item{
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    &:nth-child(1){
-      background: #aaa;
-    }
-    &:nth-child(1){
-      background: #ccc;
-    }
-    &:nth-child(1){
-      background: #eee;
-    }
-  }
 }
 </style>
